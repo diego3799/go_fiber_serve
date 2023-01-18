@@ -1,7 +1,9 @@
 package routes
 
 import (
-	"fmt"
+	"fun_server/db"
+	"fun_server/models"
+	"fun_server/utils"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,26 +17,56 @@ type userRequest struct {
 func UserRoutes(router *fiber.Router) {
 
 	userRoutes := (*router).Group("/users")
+	userRoutes.Post("/signup", func(c *fiber.Ctx) error {
+		body := userRequest{}
+		if err := c.BodyParser(&body); err != nil {
+			return c.SendStatus(http.StatusInternalServerError)
+		}
+
+		password, err := utils.CreateHashPassword(body.Password)
+		if err != nil {
+			return c.SendStatus(http.StatusInternalServerError)
+		}
+
+		userDb := models.User{
+			Email:    body.Email,
+			Password: password,
+		}
+
+		createdUser := db.Connection.Create(&userDb)
+
+		if createdUser.Error != nil {
+			return c.SendStatus(http.StatusInternalServerError)
+		}
+
+		return c.Status(http.StatusCreated).JSON(userDb)
+	})
+
 	userRoutes.Post("/signin", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
 			return c.SendStatus(http.StatusInternalServerError)
 		}
-
-		fmt.Printf("%v", body)
-
-		return c.SendStatus(http.StatusAccepted)
-	})
-
-	userRoutes.Post("/singup", func(c *fiber.Ctx) error {
-		body := userRequest{}
-		if err := c.BodyParser(&body); err != nil {
+		// See if the user exist
+		user := models.User{}
+		result := db.Connection.First(&user, models.User{
+			Email: body.Email,
+		})
+		if result.Error != nil {
+			if result.Error.Error() == utils.NotFound {
+				return c.SendStatus(http.StatusNotFound)
+			}
 			return c.SendStatus(http.StatusInternalServerError)
 		}
+		// compare password
+		err := utils.ComparePassword(user.Password, body.Password)
 
-		fmt.Printf("%v", body)
-
-		return c.SendStatus(http.StatusAccepted)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{
+				"message": "Error in email or password",
+			})
+		}
+		return c.Status(http.StatusAccepted).JSON(user)
 	})
 
 }

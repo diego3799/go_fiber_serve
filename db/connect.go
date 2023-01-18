@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var Connection *gorm.DB
+
 func InitDB() {
 	username := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
@@ -23,6 +25,8 @@ func InitDB() {
 		fmt.Print(err)
 		panic("failed to connect database")
 	}
+
+	Connection = db
 
 	db.AutoMigrate(&models.User{})
 
