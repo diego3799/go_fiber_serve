@@ -39,7 +39,18 @@ func UserRoutes(router *fiber.Router) {
 			return c.SendStatus(http.StatusInternalServerError)
 		}
 
-		return c.Status(http.StatusCreated).JSON(userDb)
+		userJwt, err := utils.CreateUserJwt(userDb.Email)
+
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(map[string]string{
+				"message": "There was an error creating the jwt",
+			})
+		}
+		return c.Status(http.StatusCreated).JSON(
+			map[string]string{
+				"jwt": userJwt,
+			},
+		)
 	})
 
 	userRoutes.Post("/signin", func(c *fiber.Ctx) error {
@@ -66,7 +77,19 @@ func UserRoutes(router *fiber.Router) {
 				"message": "Error in email or password",
 			})
 		}
-		return c.Status(http.StatusAccepted).JSON(user)
+
+		userJwt, err := utils.CreateUserJwt(user.Email)
+
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(map[string]string{
+				"message": "There was an error creating the jwt",
+			})
+		}
+		return c.Status(http.StatusCreated).JSON(
+			map[string]string{
+				"jwt": userJwt,
+			},
+		)
 	})
 
 }
