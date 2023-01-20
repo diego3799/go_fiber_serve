@@ -24,7 +24,8 @@ func main() {
 	app := fiber.New()
 	api := app.Group("/api")
 
-	routes.UserRoutes(&api)
+	userRoutes := api.Group("/users")
+	routes.UserRoutes(&userRoutes)
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",

@@ -16,8 +16,7 @@ type userRequest struct {
 
 func UserRoutes(router *fiber.Router) {
 
-	userRoutes := (*router).Group("/users")
-	userRoutes.Post("/signup", func(c *fiber.Ctx) error {
+	(*router).Post("/signup", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
 			return utils.ErrorResponse(c, http.StatusInternalServerError, "Unknown error")
@@ -51,7 +50,7 @@ func UserRoutes(router *fiber.Router) {
 		)
 	})
 
-	userRoutes.Post("/signin", func(c *fiber.Ctx) error {
+	(*router).Post("/signin", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
 			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error in email or password")
