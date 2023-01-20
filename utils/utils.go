@@ -4,11 +4,24 @@ import (
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const NotFound = "record not found"
+
+type errorResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+func ErrorResponse(c *fiber.Ctx, status int, message string) error {
+	return c.Status(status).JSON(errorResponse{
+		Success: false,
+		Message: message,
+	})
+}
 
 type JwtUser struct {
 	Email string

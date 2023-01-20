@@ -20,12 +20,12 @@ func UserRoutes(router *fiber.Router) {
 	userRoutes.Post("/signup", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Unknown error")
 		}
 
 		password, err := utils.CreateHashPassword(body.Password)
 		if err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Unknown error")
 		}
 
 		userDb := models.User{
@@ -36,15 +36,13 @@ func UserRoutes(router *fiber.Router) {
 		createdUser := db.Connection.Create(&userDb)
 
 		if createdUser.Error != nil {
-			return c.SendStatus(http.StatusInternalServerError)
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error creating user")
 		}
 
 		userJwt, err := utils.CreateUserJwt(userDb.Email)
 
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(map[string]string{
-				"message": "There was an error creating the jwt",
-			})
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error creating jwt")
 		}
 		return c.Status(http.StatusCreated).JSON(
 			map[string]string{
@@ -56,7 +54,7 @@ func UserRoutes(router *fiber.Router) {
 	userRoutes.Post("/signin", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
-			return c.SendStatus(http.StatusInternalServerError)
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error in email or password")
 		}
 		// See if the user exist
 		user := models.User{}
@@ -65,25 +63,21 @@ func UserRoutes(router *fiber.Router) {
 		})
 		if result.Error != nil {
 			if result.Error.Error() == utils.NotFound {
-				return c.SendStatus(http.StatusNotFound)
+				return utils.ErrorResponse(c, http.StatusNotFound, "user not found")
 			}
-			return c.SendStatus(http.StatusInternalServerError)
+			return utils.ErrorResponse(c, http.StatusBadRequest, "Error in email or password")
 		}
 		// compare password
 		err := utils.ComparePassword(user.Password, body.Password)
 
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{
-				"message": "Error in email or password",
-			})
+			return utils.ErrorResponse(c, http.StatusBadRequest, "Error in email or password")
 		}
 
 		userJwt, err := utils.CreateUserJwt(user.Email)
 
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(map[string]string{
-				"message": "There was an error creating the jwt",
-			})
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error creating jwt")
 		}
 		return c.Status(http.StatusCreated).JSON(
 			map[string]string{
