@@ -53,7 +53,7 @@ func UserRoutes(router *fiber.Router) {
 	(*router).Post("/signin", func(c *fiber.Ctx) error {
 		body := userRequest{}
 		if err := c.BodyParser(&body); err != nil {
-			return utils.ErrorResponse(c, http.StatusInternalServerError, "Error in email or password")
+			return utils.ErrorResponse(c, http.StatusInternalServerError, "Unknown error")
 		}
 		// See if the user exist
 		user := models.User{}
@@ -64,7 +64,7 @@ func UserRoutes(router *fiber.Router) {
 			if result.Error.Error() == utils.NotFound {
 				return utils.ErrorResponse(c, http.StatusNotFound, "user not found")
 			}
-			return utils.ErrorResponse(c, http.StatusBadRequest, "Error in email or password")
+			return utils.ErrorResponse(c, http.StatusBadRequest, "User not found")
 		}
 		// compare password
 		err := utils.ComparePassword(user.Password, body.Password)
@@ -85,4 +85,10 @@ func UserRoutes(router *fiber.Router) {
 		)
 	})
 
+	(*router).Use(utils.ValidateUserJWTMiddleware)
+
+	(*router).Get("/validate", func(c *fiber.Ctx) error {
+
+		return c.SendStatus(200)
+	})
 }

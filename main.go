@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -22,6 +22,8 @@ func main() {
 	db.InitDB()
 	PORT := os.Getenv("PORT")
 	app := fiber.New()
+	app.Use(logger.New())
+
 	api := app.Group("/api")
 
 	userRoutes := api.Group("/users")
